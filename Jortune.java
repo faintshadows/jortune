@@ -1,58 +1,69 @@
-/** Reads in the % delimited fortune files
- *  and picks a random one, much like the
- *  actual fortune program.
- *  
- *  @author faintshadows
- *  @date 2021/4/9
- * 
+import java.io.*;
+import java.util.*;
+
+/**
+ * Fortune implementation in Java
+ * Reads in the % delimited fortune file and picks a random one, much like the actual fortune program.
+ *
+ * @author faintshadows
+ * @date 2021/4/9
  */
+public class Jortune {
 
-import java.io.File;
-import java.util.Scanner;
-import java.io.IOException;
-import java.util.ArrayList;
+    public static void main(String[] args) {
+        final String firstArgument = args.length >= 1 ? args[0] : "";
+        final String path = firstArgument.trim();
+        if (path.isEmpty()) {
+            bailWithMessage("No filename given!");
+        }
 
-public class jortune {
+        try {
+            printRandomQuoteForQuotesAtPath(path);
+        } catch (IOException ioException) {
+            bailWithIOException(ioException);
+        }
+    }
 
-	/**read in the File and spit out an ArrayList of Strings from the file
-	 * 
-	 * @param file 			the file being read
-	 * @return	   			an ArrayList of Strings of every quote
-	 * @throws IOException	in case the file is broke or something idk
-	 */
-	public static ArrayList<String> readFile(File file) throws IOException {
-		//The ArrayList that will store all the quotes
-		ArrayList<String> megaQuote = new ArrayList<String>();
-		//Putting the scanner in a try block automatically closes it when finished
-		try (Scanner in = new Scanner(file)){
-			//fortune files use % on a newline as the delimiter
-			in.useDelimiter("%\n");
-			//run through the entire file, adding all text between "%\n"
-			while(in.hasNext()) {
-				megaQuote.add(in.next());
-			}
-		}
-		return megaQuote;
-	}
-	
-	/**Pick and return a random quote
-	 * 
-	 * @param quotes 		the ArrayList of quotes
-	 * @return				the randomly selected quote
-	 */
-	public static String randQuote(ArrayList<String> quotes) {
-		int index;
-		index = (int) (Math.random() * quotes.size());
-		return quotes.get(index);
-	}
-	
-	public static void main(String[] args) throws IOException {		
-		//use the first argument given to the program as the filename	
-		File src = new File(args[0]);
-		//create the list of quotes, read the file in
-		ArrayList<String> quotes = readFile(src);
-		//print out the selected quote
-		System.out.println(randQuote(quotes));
-	}
+    private static void bailWithMessage(final String message) {
+        System.err.println("Error: " + message);
+        System.exit(1);
+    }
 
+    private static void printRandomQuoteForQuotesAtPath(final String path) throws IOException {
+        final List<String> quotes = readFortuneFormattedFileAtPath(path);
+
+        final String randomQuote = pickRandomQuoteFromQuotes(quotes);
+        System.out.println(randomQuote);
+        System.exit(0);
+    }
+
+    private static List<String> readFortuneFormattedFileAtPath(final String path) throws IOException {
+        final BufferedReader quotesReader = new BufferedReader(new FileReader(path));
+
+        final List<String> quotes = new ArrayList<>();
+        try (final Scanner scanner = new Scanner(quotesReader)) {
+            // fortune files use % on a newline as the delimiter
+            scanner.useDelimiter("%\n");
+
+            while (scanner.hasNext()) {
+                quotes.add(scanner.next());
+            }
+        }
+
+        return quotes;
+    }
+
+    private static String pickRandomQuoteFromQuotes(final List<String> quotes) {
+        final int randomIndex = (int) (Math.random() * quotes.size());
+        return quotes.get(randomIndex);
+    }
+
+    private static void bailWithIOException(final IOException ioException) {
+        final String errorMessage = "Reading from the provided file was impossible, error was: ["
+                + ioException.getClass().getName()
+                + "] '"
+                + ioException.getLocalizedMessage()
+                + "'";
+        bailWithMessage(errorMessage);
+    }
 }
